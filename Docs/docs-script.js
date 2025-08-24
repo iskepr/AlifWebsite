@@ -24,22 +24,10 @@ async function showDocs(docType) {
             if (screen.width < 500) openHeadsButton.style.display = "flex";
             CatDiv.innerHTML = marked.parse(markdown);
 
-            // اضافة زر نسخ الشفرة وتلوين الشفرة - مؤجل لتحسين الأداء
+            // اضافة زر نسخ الشفرة وتلوين الشفرة - معالجة تدريجية لتحسين الأداء
             setTimeout(() => {
                 const codes = document.querySelectorAll("code");
-                codes.forEach((block) => {
-                    if (!block.dataset.enhanced) {
-                        block.innerHTML = highlightAlif(block.innerText);
-                        const copyButton = document.createElement("div");
-                        copyButton.className = "copy";
-                        copyButton.innerHTML = "نسخ";
-                        copyButton.addEventListener("click", () =>
-                            copyCode(copyButton, block.innerText)
-                        );
-                        block.appendChild(copyButton);
-                        block.dataset.enhanced = "1";
-                    }
-                });
+                highlightCodeInChunks(codes);
             }, 100); // تأخير صغير للسماح للصفحة بالتحميل أولاً
 
             // اضافة العناوين الجانبية
@@ -152,6 +140,39 @@ document.addEventListener("click", (e) => {
         else history.replaceState(null, "", "#" + id);
     }
 });
+
+// معالجة تدريجية لتلوين الشفرة لتجنب حجب الخيط الرئيسي
+function highlightCodeInChunks(codeBlocks) {
+    let index = 0;
+    const chunkSize = 3; // معالجة 3 بلوكات في كل مرة
+    
+    function processChunk() {
+        const end = Math.min(index + chunkSize, codeBlocks.length);
+        
+        for (let i = index; i < end; i++) {
+            const block = codeBlocks[i];
+            if (!block.dataset.enhanced) {
+                block.innerHTML = highlightAlif(block.innerText);
+                const copyButton = document.createElement("div");
+                copyButton.className = "copy";
+                copyButton.innerHTML = "نسخ";
+                copyButton.addEventListener("click", () =>
+                    copyCode(copyButton, block.innerText)
+                );
+                block.appendChild(copyButton);
+                block.dataset.enhanced = "1";
+            }
+        }
+        
+        index = end;
+        
+        if (index < codeBlocks.length) {
+            requestAnimationFrame(processChunk); // متابعة في الإطار التالي
+        }
+    }
+    
+    requestAnimationFrame(processChunk);
+}
 
 export function highlightAlif(code) {
     const tokens = [
