@@ -47,16 +47,19 @@ async function showDocs(docType) {
             });
             heads.appendChild(frag);
 
-            // مكتبة انميشن النزول
+            // مكتبة انميشن النزول - مؤجل لتحسين الأداء
             const titles = CatDiv.querySelectorAll("ol li");
             titles.forEach((li) => {
                 const h5 = li.querySelector("h5");
                 if (h5) li.id = h5.id;
                 li.dataset.aos = "fade-up";
             });
+            // تأجيل تهيئة الرسوم المتحركة لتجنب حجب الخيط الرئيسي
             if (typeof AOS !== "undefined") {
-                AOS.init({ duration: 400 });
-                AOS.refresh();
+                setTimeout(() => {
+                    AOS.init({ duration: 400 });
+                    AOS.refresh();
+                }, 300); // تأخير أكبر للسماح للمحتوى بالتحميل أولاً
             }
 
             // تلوين الزر مع القسم المعروض
