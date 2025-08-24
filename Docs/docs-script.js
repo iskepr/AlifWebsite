@@ -24,21 +24,23 @@ async function showDocs(docType) {
             if (screen.width < 500) openHeadsButton.style.display = "flex";
             CatDiv.innerHTML = marked.parse(markdown);
 
-            // اضافة زر نسخ الشفرة وتلوين الشفرة
-            const codes = document.querySelectorAll("code");
-            codes.forEach((block) => {
-                if (!block.dataset.enhanced) {
-                    block.innerHTML = highlightAlif(block.innerText);
-                    const copyButton = document.createElement("div");
-                    copyButton.className = "copy";
-                    copyButton.innerHTML = "نسخ";
-                    copyButton.addEventListener("click", () =>
-                        copyCode(copyButton, block.innerText)
-                    );
-                    block.appendChild(copyButton);
-                    block.dataset.enhanced = "1";
-                }
-            });
+            // اضافة زر نسخ الشفرة وتلوين الشفرة - مؤجل لتحسين الأداء
+            setTimeout(() => {
+                const codes = document.querySelectorAll("code");
+                codes.forEach((block) => {
+                    if (!block.dataset.enhanced) {
+                        block.innerHTML = highlightAlif(block.innerText);
+                        const copyButton = document.createElement("div");
+                        copyButton.className = "copy";
+                        copyButton.innerHTML = "نسخ";
+                        copyButton.addEventListener("click", () =>
+                            copyCode(copyButton, block.innerText)
+                        );
+                        block.appendChild(copyButton);
+                        block.dataset.enhanced = "1";
+                    }
+                });
+            }, 100); // تأخير صغير للسماح للصفحة بالتحميل أولاً
 
             // اضافة العناوين الجانبية
             const headings = CatDiv.querySelectorAll("h5");
