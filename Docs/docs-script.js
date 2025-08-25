@@ -24,21 +24,11 @@ async function showDocs(docType) {
             if (screen.width < 500) openHeadsButton.style.display = "flex";
             CatDiv.innerHTML = marked.parse(markdown);
 
-            // اضافة زر نسخ الشفرة وتلوين الشفرة
-            const codes = document.querySelectorAll("code");
-            codes.forEach((block) => {
-                if (!block.dataset.enhanced) {
-                    block.innerHTML = highlightAlif(block.innerText);
-                    const copyButton = document.createElement("div");
-                    copyButton.className = "copy";
-                    copyButton.innerHTML = "نسخ";
-                    copyButton.addEventListener("click", () =>
-                        copyCode(copyButton, block.innerText)
-                    );
-                    block.appendChild(copyButton);
-                    block.dataset.enhanced = "1";
-                }
-            });
+            // اضافة زر نسخ الشفرة وتلوين الشفرة - معالجة تدريجية لتحسين الأداء
+            setTimeout(() => {
+                const codes = document.querySelectorAll("code");
+                highlightCodeInChunks(codes);
+            }, 100); // تأخير صغير للسماح للصفحة بالتحميل أولاً
 
             // اضافة العناوين الجانبية
             const headings = CatDiv.querySelectorAll("h5");
@@ -57,16 +47,19 @@ async function showDocs(docType) {
             });
             heads.appendChild(frag);
 
-            // مكتبة انميشن النزول
+            // مكتبة انميشن النزول - مؤجل لتحسين الأداء
             const titles = CatDiv.querySelectorAll("ol li");
             titles.forEach((li) => {
                 const h5 = li.querySelector("h5");
                 if (h5) li.id = h5.id;
                 li.dataset.aos = "fade-up";
             });
+            // تأجيل تهيئة الرسوم المتحركة لتجنب حجب الخيط الرئيسي
             if (typeof AOS !== "undefined") {
-                AOS.init({ duration: 400 });
-                AOS.refresh();
+                setTimeout(() => {
+                    AOS.init({ duration: 400 });
+                    AOS.refresh();
+                }, 300); // تأخير أكبر للسماح للمحتوى بالتحميل أولاً
             }
 
             // تلوين الزر مع القسم المعروض
@@ -150,6 +143,39 @@ document.addEventListener("click", (e) => {
         else history.replaceState(null, "", "#" + id);
     }
 });
+
+// معالجة تدريجية لتلوين الشفرة لتجنب حجب الخيط الرئيسي
+function highlightCodeInChunks(codeBlocks) {
+    let index = 0;
+    const chunkSize = 3; // معالجة 3 بلوكات في كل مرة
+    
+    function processChunk() {
+        const end = Math.min(index + chunkSize, codeBlocks.length);
+        
+        for (let i = index; i < end; i++) {
+            const block = codeBlocks[i];
+            if (!block.dataset.enhanced) {
+                block.innerHTML = highlightAlif(block.innerText);
+                const copyButton = document.createElement("div");
+                copyButton.className = "copy";
+                copyButton.innerHTML = "نسخ";
+                copyButton.addEventListener("click", () =>
+                    copyCode(copyButton, block.innerText)
+                );
+                block.appendChild(copyButton);
+                block.dataset.enhanced = "1";
+            }
+        }
+        
+        index = end;
+        
+        if (index < codeBlocks.length) {
+            requestAnimationFrame(processChunk); // متابعة في الإطار التالي
+        }
+    }
+    
+    requestAnimationFrame(processChunk);
+}
 
 export function highlightAlif(code) {
     const tokens = [
